@@ -9,6 +9,11 @@ import Volunteer from './models/Volunteer.js';
 // Load environment variables
 dotenv.config();
 
+// Allowed client origins (comma-separated in Render/Vercel env var)
+const ALLOWED_CLIENT_ORIGINS = process.env.CLIENT_URLS
+  ? process.env.CLIENT_URLS.split(',').map((u) => u.trim())
+  : ['http://localhost:5173', 'http://127.0.0.1:5173'];
+
 // Connect to local or Atlas MongoDB database
 connectDB().then(() => {
   // Proactively check and initialize default Admin user
@@ -18,10 +23,17 @@ connectDB().then(() => {
 const app = express();
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow non-browser or same-origin requests
+      if (!origin) return callback(null, true);
+      if (ALLOWED_CLIENT_ORIGINS.includes(origin)) return callback(null, true);
+      return callback(new Error('CORS policy: origin not allowed'));
+    },
+    credentials: true
+  })
+);
 app.use(express.json());
 
 // Routes
