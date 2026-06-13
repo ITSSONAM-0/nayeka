@@ -3,6 +3,8 @@ import { toast } from '../components/Toast';
 
 const AuthContext = createContext(null);
 
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:5001';
+
 export const apiCall = async (url, options = {}) => {
   const token = localStorage.getItem('token');
   const headers = {
@@ -19,7 +21,8 @@ export const apiCall = async (url, options = {}) => {
     headers
   };
 
-  const response = await fetch(url, config);
+  const fullUrl = url.startsWith('http') ? url : `${API_BASE_URL}${url}`;
+  const response = await fetch(fullUrl, config);
   const text = await response.text();
   
   let data;
