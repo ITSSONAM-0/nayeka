@@ -14,6 +14,9 @@ const ALLOWED_CLIENT_ORIGINS = process.env.CLIENT_URLS
   ? process.env.CLIENT_URLS.split(',').map((u) => u.trim())
   : ['http://localhost:5173', 'http://127.0.0.1:5173'];
 
+// Temporary shortcut for testing: allow all origins when true
+const ALLOW_ALL_ORIGINS = process.env.ALLOW_ALL_ORIGINS === 'true';
+
 // Connect to local or Atlas MongoDB database
 connectDB().then(() => {
   // Proactively check and initialize default Admin user
@@ -23,17 +26,27 @@ connectDB().then(() => {
 const app = express();
 
 // Middleware
-app.use(
-  cors({
-    origin: (origin, callback) => {
-      // allow non-browser or same-origin requests
-      if (!origin) return callback(null, true);
-      if (ALLOWED_CLIENT_ORIGINS.includes(origin)) return callback(null, true);
-      return callback(new Error('CORS policy: origin not allowed'));
-    },
-    credentials: true
-  })
-);
+if (ALLOW_ALL_ORIGINS) {
+  // WARNING: this allows any origin. Use only for testing.
+  app.use(
+    cors({
+      origin: true,
+      credentials: true
+    })
+  );
+} else {
+  app.use(
+    cors({
+      origin: (origin, callback) => {
+        // allow non-browser or same-origin requests
+        if (!origin) return callback(null, true);
+        if (ALLOWED_CLIENT_ORIGINS.includes(origin)) return callback(null, true);
+        return callback(new Error('CORS policy: origin not allowed'));
+      },
+      credentials: true
+    })
+  );
+}
 app.use(express.json());
 
 // Routes
